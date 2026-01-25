@@ -12,14 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""API router that aggregates all API modules."""
+from .in_memory import (
+    InMemoryJobRepository,
+    InMemoryStageRepository,
+    InMemoryIdempotencyRepository,
+    InMemoryAuditEventRepository,
+)
 
-from fastapi import APIRouter
-
-from .jobs import router as jobs_router
-from .parse_catalog import router as parse_catalog_router
-
-api_router = APIRouter(prefix="/api/v1")
-
-api_router.include_router(parse_catalog_router)
-api_router.include_router(jobs_router)
+__all__ = [
+    "InMemoryJobRepository",
+    "InMemoryStageRepository",
+    "InMemoryIdempotencyRepository",
+    "InMemoryAuditEventRepository",
+]
