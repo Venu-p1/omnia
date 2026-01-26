@@ -11,3 +11,22 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+"""PostgreSQL persistence infrastructure for BuildStreaM."""
+
+from .repositories import (
+    SqlAuditEventRepository,
+    SqlIdempotencyRepository,
+    SqlJobRepository,
+    SqlStageRepository,
+)
+from .session import get_db, get_db_session
+
+__all__ = [
+    "SqlJobRepository",
+    "SqlStageRepository",
+    "SqlIdempotencyRepository",
+    "SqlAuditEventRepository",
+    "get_db",
+    "get_db_session",
+]

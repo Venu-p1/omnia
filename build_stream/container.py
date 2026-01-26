@@ -16,12 +16,19 @@ import os
 
 from dependency_injector import containers, providers
 
+from infra.db import (
+    SqlAuditEventRepository,
+    SqlIdempotencyRepository,
+    SqlJobRepository,
+    SqlStageRepository,
+    get_db,
+)
 from infra.id_generator import UUIDv7Generator
 from infra.repositories import (
+    InMemoryAuditEventRepository,
+    InMemoryIdempotencyRepository,
     InMemoryJobRepository,
     InMemoryStageRepository,
-    InMemoryIdempotencyRepository,
-    InMemoryAuditEventRepository,
 )
 from orchestrator.jobs.use_cases import CreateJobUseCase
 
@@ -65,8 +72,8 @@ class DevContainer(containers.DeclarativeContainer):
 class ProdContainer(containers.DeclarativeContainer):
     """Production profile container.
     
-    Currently uses mock repositories (same as dev).
-    TODO: Replace with PostgreSQL repositories when SQL implementation is ready.
+    Uses PostgreSQL repositories with per-request database session scope.
+    Requires DATABASE_URL environment variable to be configured.
     
     Activated when ENV=prod.
     """
@@ -80,13 +87,27 @@ class ProdContainer(containers.DeclarativeContainer):
     
     job_id_generator = providers.Singleton(UUIDv7Generator)
     
-    job_repository = providers.Singleton(InMemoryJobRepository)
+    db_session = providers.Resource(get_db)
     
-    stage_repository = providers.Singleton(InMemoryStageRepository)
+    job_repository = providers.Factory(
+        SqlJobRepository,
+        session=db_session,
+    )
     
-    idempotency_repository = providers.Singleton(InMemoryIdempotencyRepository)
+    stage_repository = providers.Factory(
+        SqlStageRepository,
+        session=db_session,
+    )
     
-    audit_repository = providers.Singleton(InMemoryAuditEventRepository)
+    idempotency_repository = providers.Factory(
+        SqlIdempotencyRepository,
+        session=db_session,
+    )
+    
+    audit_repository = providers.Factory(
+        SqlAuditEventRepository,
+        session=db_session,
+    )
     
     create_job_use_case = providers.Factory(
         CreateJobUseCase,

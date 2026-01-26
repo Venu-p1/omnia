@@ -17,10 +17,10 @@ from typing import Optional
 from dependency_injector.wiring import Provide, inject
 from fastapi import Depends, Header, HTTPException, status
 
+from core.jobs.repositories import JobRepository, StageRepository
 from core.jobs.value_objects import ClientId, CorrelationId
 from container import Container
 from infra.id_generator import UUIDv7Generator
-from infra.repositories import InMemoryJobRepository, InMemoryStageRepository
 from orchestrator.jobs.use_cases import CreateJobUseCase
 
 
@@ -40,15 +40,15 @@ def get_create_job_use_case(
 
 @inject
 def get_job_repo(
-    repo: InMemoryJobRepository = Depends(Provide[Container.job_repository]),
-) -> InMemoryJobRepository:
+    repo: JobRepository = Depends(Provide[Container.job_repository]),
+) -> JobRepository:
     return repo
 
 
 @inject
 def get_stage_repo(
-    repo: InMemoryStageRepository = Depends(Provide[Container.stage_repository]),
-) -> InMemoryStageRepository:
+    repo: StageRepository = Depends(Provide[Container.stage_repository]),
+) -> StageRepository:
     return repo
 
 

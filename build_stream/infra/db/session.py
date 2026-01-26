@@ -22,13 +22,16 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from .config import db_config
 
-engine = create_engine(
-    db_config.database_url,
-    pool_size=db_config.pool_size,
-    max_overflow=db_config.max_overflow,
-    pool_recycle=db_config.pool_recycle,
-    echo=db_config.echo,
-)
+# Create engine with conditional pool parameters (SQLite doesn't support some pool options)
+engine_kwargs = {"echo": db_config.echo}
+if not db_config.database_url.startswith("sqlite"):
+    engine_kwargs.update({
+        "pool_size": db_config.pool_size,
+        "max_overflow": db_config.max_overflow,
+        "pool_recycle": db_config.pool_recycle,
+    })
+
+engine = create_engine(db_config.database_url, **engine_kwargs)
 
 SessionLocal = sessionmaker(
     autocommit=False,
