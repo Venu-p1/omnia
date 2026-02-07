@@ -22,6 +22,9 @@ from .exceptions import (
     InvalidStateTransitionError,
     TerminalStateViolationError,
     IdempotencyConflictError,
+    StageAlreadyCompletedError,
+    StageNotFoundError,
+    UpstreamStageNotCompletedError,
 )
 from .repositories import (
     JobRepository,
@@ -54,6 +57,9 @@ __all__ = [
     "InvalidStateTransitionError",
     "TerminalStateViolationError",
     "IdempotencyConflictError",
+    "StageAlreadyCompletedError",
+    "StageNotFoundError",
+    "UpstreamStageNotCompletedError",
     "JobRepository",
     "StageRepository",
     "IdempotencyRepository",

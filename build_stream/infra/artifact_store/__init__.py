@@ -12,18 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""API router that aggregates all API modules."""
+"""Artifact store infrastructure implementations."""
 
-from fastapi import APIRouter
+from .in_memory_artifact_store import InMemoryArtifactStore
+from .in_memory_artifact_metadata import InMemoryArtifactMetadataRepository
 
-from .auth import router as auth_router
-from .generate_input_files import router as generate_input_files_router
-from .jobs import router as jobs_router
-from .parse_catalog import router as parse_catalog_router
-
-api_router = APIRouter(prefix="/api/v1")
-
-api_router.include_router(auth_router)
-api_router.include_router(parse_catalog_router)
-api_router.include_router(generate_input_files_router)
-api_router.include_router(jobs_router)
+__all__ = [
+    "InMemoryArtifactStore",
+    "InMemoryArtifactMetadataRepository",
+]

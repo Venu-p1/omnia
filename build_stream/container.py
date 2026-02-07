@@ -16,9 +16,15 @@
 # pylint: disable=c-extension-no-member
 
 import os
+from pathlib import Path
 
 from dependency_injector import containers, providers
 
+from core.artifacts.value_objects import SafePath
+from infra.artifact_store.in_memory_artifact_store import InMemoryArtifactStore
+from infra.artifact_store.in_memory_artifact_metadata import (
+    InMemoryArtifactMetadataRepository,
+)
 from infra.id_generator import JobUUIDGenerator, UUIDv4Generator
 from infra.repositories import (
     InMemoryJobRepository,
@@ -26,7 +32,15 @@ from infra.repositories import (
     InMemoryIdempotencyRepository,
     InMemoryAuditEventRepository,
 )
+from orchestrator.catalog.use_cases.parse_catalog import ParseCatalogUseCase
+from orchestrator.catalog.use_cases.generate_input_files import (
+    GenerateInputFilesUseCase,
+)
 from orchestrator.jobs.use_cases import CreateJobUseCase
+
+_RESOURCES_DIR = Path(__file__).resolve().parent / "core" / "catalog" / "resources"
+_DEFAULT_POLICY_PATH = _RESOURCES_DIR / "adapter_policy.json"
+_DEFAULT_SCHEMA_PATH = _RESOURCES_DIR / "AdapterPolicySchema.json"
 
 
 class DevContainer(containers.DeclarativeContainer):  # pylint: disable=R0903
@@ -52,6 +66,12 @@ class DevContainer(containers.DeclarativeContainer):  # pylint: disable=R0903
 
     audit_repository = providers.Singleton(InMemoryAuditEventRepository)
 
+    artifact_store = providers.Singleton(InMemoryArtifactStore)
+
+    artifact_metadata_repository = providers.Singleton(
+        InMemoryArtifactMetadataRepository,
+    )
+
     create_job_use_case = providers.Factory(
         CreateJobUseCase,
         job_repo=job_repository,
@@ -60,6 +80,28 @@ class DevContainer(containers.DeclarativeContainer):  # pylint: disable=R0903
         audit_repo=audit_repository,
         job_id_generator=job_id_generator,
         uuid_generator=uuid_generator,
+    )
+
+    parse_catalog_use_case = providers.Factory(
+        ParseCatalogUseCase,
+        job_repo=job_repository,
+        stage_repo=stage_repository,
+        audit_repo=audit_repository,
+        artifact_store=artifact_store,
+        artifact_metadata_repo=artifact_metadata_repository,
+        uuid_generator=uuid_generator,
+    )
+
+    generate_input_files_use_case = providers.Factory(
+        GenerateInputFilesUseCase,
+        job_repo=job_repository,
+        stage_repo=stage_repository,
+        audit_repo=audit_repository,
+        artifact_store=artifact_store,
+        artifact_metadata_repo=artifact_metadata_repository,
+        uuid_generator=uuid_generator,
+        default_policy_path=SafePath(value=_DEFAULT_POLICY_PATH),
+        policy_schema_path=SafePath(value=_DEFAULT_SCHEMA_PATH),
     )
 
 
@@ -86,6 +128,12 @@ class ProdContainer(containers.DeclarativeContainer):  # pylint: disable=R0903
 
     audit_repository = providers.Singleton(InMemoryAuditEventRepository)
 
+    artifact_store = providers.Singleton(InMemoryArtifactStore)
+
+    artifact_metadata_repository = providers.Singleton(
+        InMemoryArtifactMetadataRepository,
+    )
+
     create_job_use_case = providers.Factory(
         CreateJobUseCase,
         job_repo=job_repository,
@@ -94,6 +142,28 @@ class ProdContainer(containers.DeclarativeContainer):  # pylint: disable=R0903
         audit_repo=audit_repository,
         job_id_generator=job_id_generator,
         uuid_generator=uuid_generator,
+    )
+
+    parse_catalog_use_case = providers.Factory(
+        ParseCatalogUseCase,
+        job_repo=job_repository,
+        stage_repo=stage_repository,
+        audit_repo=audit_repository,
+        artifact_store=artifact_store,
+        artifact_metadata_repo=artifact_metadata_repository,
+        uuid_generator=uuid_generator,
+    )
+
+    generate_input_files_use_case = providers.Factory(
+        GenerateInputFilesUseCase,
+        job_repo=job_repository,
+        stage_repo=stage_repository,
+        audit_repo=audit_repository,
+        artifact_store=artifact_store,
+        artifact_metadata_repo=artifact_metadata_repository,
+        uuid_generator=uuid_generator,
+        default_policy_path=SafePath(value=_DEFAULT_POLICY_PATH),
+        policy_schema_path=SafePath(value=_DEFAULT_SCHEMA_PATH),
     )
 
 
