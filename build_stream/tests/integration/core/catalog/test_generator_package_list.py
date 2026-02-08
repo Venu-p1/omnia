@@ -23,12 +23,11 @@ import unittest
 from jsonschema import ValidationError
 
 HERE = os.path.dirname(__file__)
-CATALOG_PARSER_DIR = os.path.dirname(HERE)
-PROJECT_ROOT = os.path.dirname(CATALOG_PARSER_DIR)
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(HERE))))  # Go up 5 levels to reach build_stream root
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-from catalog_parser.generator import (
+from core.catalog.generator import (
     FeatureList,
     serialize_json,
     get_package_list,
@@ -41,8 +40,9 @@ class TestGetPackageList(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures."""
         self.base_dir = os.path.dirname(__file__)
+        # Calculate path to fixtures: tests/integration/core/catalog -> tests/fixtures/catalogs
         self.fixture_path = os.path.abspath(
-            os.path.join(self.base_dir, "..", "test_fixtures", "functional_layer.json")
+            os.path.join(self.base_dir, "..", "..", "..", "fixtures", "catalogs", "functional_layer.json")
         )
 
     def test_get_packages_for_valid_single_role(self):

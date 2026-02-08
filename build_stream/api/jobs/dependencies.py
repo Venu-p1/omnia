@@ -20,7 +20,7 @@ from fastapi import Header, HTTPException, status
 
 from container import container
 from core.jobs.value_objects import ClientId, CorrelationId
-from infra.id_generator import JobUUIDGenerator
+from infra.id_generator import JobUUIDGenerator, UUIDv4Generator
 from infra.repositories import InMemoryJobRepository, InMemoryStageRepository
 from orchestrator.jobs.use_cases import CreateJobUseCase
 

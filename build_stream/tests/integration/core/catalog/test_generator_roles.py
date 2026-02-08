@@ -19,12 +19,11 @@ import unittest
 from jsonschema import ValidationError
 
 HERE = os.path.dirname(__file__)
-CATALOG_PARSER_DIR = os.path.dirname(HERE)
-PROJECT_ROOT = os.path.dirname(CATALOG_PARSER_DIR)
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(HERE))))  # Go up 5 levels to reach build_stream root
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-from catalog_parser.generator import (
+from core.catalog.generator import (
     FeatureList,
     serialize_json,
     get_functional_layer_roles_from_file,
@@ -33,9 +32,8 @@ from catalog_parser.generator import (
 
 class TestGetFunctionalLayerRolesFromFile(unittest.TestCase):
     def test_returns_all_role_names_from_fixture(self):
-        base_dir = os.path.dirname(__file__)
         fixture_path = os.path.abspath(
-            os.path.join(base_dir, "..", "test_fixtures", "functional_layer.json")
+            os.path.join(os.path.dirname(__file__), "..", "..", "..", "fixtures", "catalogs", "functional_layer.json")
         )
 
         roles = get_functional_layer_roles_from_file(fixture_path)

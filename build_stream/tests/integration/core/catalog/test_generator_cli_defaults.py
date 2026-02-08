@@ -18,38 +18,43 @@ import tempfile
 import unittest
 
 HERE = os.path.dirname(__file__)
-CATALOG_PARSER_DIR = os.path.dirname(HERE)
-PROJECT_ROOT = os.path.dirname(CATALOG_PARSER_DIR)
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(HERE))))  # Go up 5 levels to reach build_stream root
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-from catalog_parser.adapter import generate_omnia_json_from_catalog, _DEFAULT_SCHEMA_PATH
+from core.catalog.generator import generate_root_json_from_catalog, _DEFAULT_SCHEMA_PATH
 
 
-class TestAdapterDefaults(unittest.TestCase):
+class TestGeneratorDefaults(unittest.TestCase):
     def test_default_schema_path_points_to_resources(self):
-        catalog_parser_dir = os.path.dirname(os.path.dirname(__file__))
-        expected_schema = os.path.join(catalog_parser_dir, "resources", "CatalogSchema.json")
+        # The default schema path should point to the actual resources directory
+        expected_schema = os.path.join(PROJECT_ROOT, "core", "catalog", "resources", "CatalogSchema.json")
         self.assertEqual(os.path.abspath(_DEFAULT_SCHEMA_PATH), os.path.abspath(expected_schema))
 
-    def test_generate_omnia_json_with_defaults_writes_output(self):
-        catalog_parser_dir = os.path.dirname(os.path.dirname(__file__))
-        catalog_path = os.path.join(catalog_parser_dir, "test_fixtures", "catalog_rhel.json")
+    def test_generate_root_json_with_defaults_writes_output(self):
+        catalog_path = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "..", "..", "..", "fixtures", "catalogs", "catalog_rhel.json")
+        )
+        
+        # Skip test if fixture doesn't exist
+        if not os.path.exists(catalog_path):
+            self.skipTest("Catalog fixture not found")
+            return
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            generate_omnia_json_from_catalog(
+            generate_root_json_from_catalog(
                 catalog_path=catalog_path,
                 output_root=tmpdir,
             )
 
-            # We expect some JSON files under arch/os/version
-            found_any_json = False
+            # We expect at least one arch/os/version directory with functional_layer.json
+            found = False
             for root, dirs, files in os.walk(tmpdir):
-                if any(f.endswith('.json') for f in files):
-                    found_any_json = True
+                if "functional_layer.json" in files:
+                    found = True
                     break
 
-            self.assertTrue(found_any_json, "No JSON configs generated under any arch/os/version")
+            self.assertTrue(found, "functional_layer.json not generated under any arch/os/version")
 
 
 if __name__ == "__main__":

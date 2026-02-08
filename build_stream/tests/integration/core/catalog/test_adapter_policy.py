@@ -26,7 +26,7 @@ PROJECT_ROOT = os.path.dirname(CATALOG_PARSER_DIR)
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-from catalog_parser.adapter_policy import (
+from core.catalog.adapter_policy import (
     validate_policy_config,
     discover_architectures,
     discover_os_versions,
@@ -46,7 +46,7 @@ from catalog_parser.adapter_policy import (
     _DEFAULT_POLICY_PATH,
     _DEFAULT_SCHEMA_PATH,
 )
-from catalog_parser import adapter_policy_schema_consts as schema
+from core.catalog import adapter_policy_schema_consts as schema
 
 
 class TestValidatePolicyConfig(unittest.TestCase):

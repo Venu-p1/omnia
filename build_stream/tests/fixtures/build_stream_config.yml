@@ -1,0 +1,86 @@
+# BuildStreaM Configuration - Test Environment
+# Used for running all tests (unit, integration, end-to-end)
+
+# Database Configuration (PostgreSQL for production metadata)
+database:
+  url: "postgresql://buildstream:buildstream@localhost:5432/buildstream_test"
+  echo: false
+  pool_size: 5
+  max_overflow: 10
+
+# Artifact Store Configuration
+artifact_store:
+  backend: "memory"  # Use in-memory store for tests
+  working_dir: "/tmp/build_stream_test"
+  max_file_size_bytes: 5242880  # 5MB
+  max_archive_uncompressed_bytes: 52428800  # 50MB
+  max_archive_entries: 500
+
+# NAS Store Configuration (for end-to-end tests with real storage)
+nas_store:
+  base_path: "/tmp/build_stream_test/artifacts"
+  enabled: false  # Disabled for unit/integration tests
+
+# API Configuration
+api:
+  host: "127.0.0.1"
+  port: 8000
+  workers: 1
+  reload: false
+  log_level: "info"
+  cors_origins:
+    - "http://localhost:3000"
+    - "http://127.0.0.1:3000"
+
+# Authentication Configuration
+auth:
+  secret_key: "test-secret-key-change-in-production"
+  algorithm: "HS256"
+  access_token_expire_minutes: 30
+  issuer: "buildstream-test"
+  audience: "buildstream-api"
+
+# Catalog Configuration
+catalog:
+  max_upload_size_bytes: 5242880  # 5MB
+  max_nesting_depth: 20
+  schema_path: "core/catalog/resources/CatalogSchema.json"
+  adapter_policy_default_path: "core/catalog/resources/adapter_policy_default.json"
+  adapter_policy_schema_path: "core/catalog/resources/AdapterPolicySchema.json"
+
+# Job Configuration
+job:
+  max_concurrent_jobs: 10
+  job_timeout_minutes: 60
+  cleanup_interval_minutes: 30
+
+# Logging Configuration
+logging:
+  level: "INFO"
+  format: "json"
+  file_path: "logs/buildstream_test.log"
+  max_file_size_mb: 100
+  backup_count: 5
+
+# Test Configuration
+test:
+  database_url: "sqlite:///./test.db"  # SQLite for fast unit tests
+  use_in_memory_stores: true
+  cleanup_temp_dirs: true
+  mock_external_services: true
+
+# Monitoring Configuration (disabled for tests)
+monitoring:
+  enabled: false
+  prometheus_port: 9090
+  health_check_interval: 30
+
+# Security Configuration
+security:
+  validate_content_types: true
+  allowed_content_types:
+    - "application/json"
+    - "text/plain"
+    - "application/zip"
+  max_request_size_mb: 10
+  rate_limit_enabled: false  # Disabled for tests
