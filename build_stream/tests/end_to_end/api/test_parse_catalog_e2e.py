@@ -326,17 +326,6 @@ class TestParseCatalogWorkflow:
             assert "status" in response_data
             assert response_data["status"] == "success"
             assert "message" in response_data
-            assert "output_path" in response_data
-            
-            # Check for artifacts if they exist
-            if "artifacts" in response_data:
-                artifacts = response_data["artifacts"]
-                if "catalog_ref" in artifacts:
-                    assert "key" in artifacts["catalog_ref"]
-                    assert "digest" in artifacts["catalog_ref"]
-                if "root_jsons_ref" in artifacts:
-                    assert "key" in artifacts["root_jsons_ref"]
-                    assert "digest" in artifacts["root_jsons_ref"]
 
     def test_06_parse_catalog_with_invalid_data(
         self,

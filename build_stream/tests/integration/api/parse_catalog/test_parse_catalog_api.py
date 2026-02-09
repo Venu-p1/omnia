@@ -101,8 +101,6 @@ class TestParseCatalogAPI:
         # Verify response structure based on actual API response
         assert data["status"] == "success"
         assert data["message"] == "Catalog parsed successfully"
-        assert "output_path" in data
-        assert data["output_path"] == "out/generator"
 
     def test_parse_catalog_with_custom_filename(
         self,
@@ -123,7 +121,6 @@ class TestParseCatalogAPI:
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "success"
-        assert data["output_path"] == "out/generator"
 
     def test_parse_catalog_invalid_json_format(
         self,

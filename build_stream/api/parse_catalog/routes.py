@@ -115,12 +115,7 @@ async def parse_catalog(
         response_data = {
             "status": ParseCatalogStatus.SUCCESS.value,
             "message": result.message,
-            "output_path": result.output_path,
         }
-        
-        # Include artifacts if available
-        if result.artifacts:
-            response_data["artifacts"] = result.artifacts
             
         return response_data
 

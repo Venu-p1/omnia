@@ -46,8 +46,6 @@ class ParseResult:
 
     success: bool
     message: str
-    output_path: Optional[str] = None
-    artifacts: Optional[dict] = None
 
 
 class ParseCatalogService:  # pylint: disable=too-few-public-methods
@@ -128,27 +126,9 @@ class ParseCatalogService:  # pylint: disable=too-few-public-methods
         result = use_case.execute(command)
         
         # Convert orchestrator result to API result
-        # Note: The orchestrator returns ParseCatalogResult with artifact refs
         return ParseResult(
             success=True,
             message=result.message,
-            output_path="out/generator",
-            artifacts={
-                "catalog_ref": {
-                    "key": str(result.catalog_ref.key.value),
-                    "digest": str(result.catalog_ref.digest.value),
-                    "size_bytes": result.catalog_ref.size_bytes,
-                    "uri": result.catalog_ref.uri,
-                    "kind": "file",  # Catalog is always a file
-                },
-                "root_jsons_ref": {
-                    "key": str(result.root_jsons_ref.key.value),
-                    "digest": str(result.root_jsons_ref.digest.value),
-                    "size_bytes": result.root_jsons_ref.size_bytes,
-                    "uri": result.root_jsons_ref.uri,
-                    "kind": "archive",  # Root JSONs are always an archive
-                },
-            }
         )
 
     def _validate_file_format(self, filename: str) -> None:
