@@ -38,7 +38,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-container.wire(modules=["api.jobs.routes", "api.jobs.dependencies"])
+container.wire(modules=["api.jobs.routes", "api.jobs.dependencies", "api.parse_catalog.routes", "api.generate_input_files.routes"])
 logger.info("Using container: %s", container.__class__.__name__)
 
 app = FastAPI(

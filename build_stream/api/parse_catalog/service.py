@@ -45,6 +45,7 @@ class ParseResult:
     success: bool
     message: str
     output_path: Optional[str] = None
+    artifacts: Optional[dict] = None
 
 
 class ParseCatalogService:  # pylint: disable=too-few-public-methods
@@ -64,12 +65,14 @@ class ParseCatalogService:  # pylint: disable=too-few-public-methods
         self,
         filename: str,
         contents: bytes,
+        job_id: str,
     ) -> ParseResult:
         """Parse a catalog from uploaded file contents.
 
         Args:
             filename: Name of the uploaded file.
             contents: Raw bytes content of the uploaded file.
+            job_id: The job identifier for the orchestrator.
 
         Returns:
             ParseResult containing the operation status and details.
@@ -81,11 +84,60 @@ class ParseCatalogService:  # pylint: disable=too-few-public-methods
         """
         logger.info("Starting catalog parse for file: %s", filename)
 
+        # Note: Job validation is handled by the orchestrator use case
         self._validate_file_format(filename)
         json_data = self._parse_json_content(contents)
         self._validate_json_structure(json_data)
 
-        return await self._process_catalog(json_data)
+        return await self._process_catalog_via_orchestrator(json_data, job_id)
+
+    async def _process_catalog_via_orchestrator(self, json_data: dict, job_id: str) -> ParseResult:
+        """Process catalog using the orchestrator use case."""
+        from container import container
+        from orchestrator.catalog.commands.parse_catalog import ParseCatalogCommand
+        from core.jobs.value_objects import JobId, CorrelationId
+        from infra.id_generator import UUIDv4Generator
+        
+        # Create command for orchestrator
+        uuid_gen = UUIDv4Generator()
+        
+        # Convert json_data back to bytes as expected by orchestrator
+        json_bytes = json.dumps(json_data).encode('utf-8')
+        
+        command = ParseCatalogCommand(
+            job_id=JobId(job_id),
+            correlation_id=CorrelationId(str(uuid_gen.generate())),
+            filename="uploaded.json",
+            content=json_bytes,
+        )
+        
+        # Execute via orchestrator use case
+        use_case = container.parse_catalog_use_case()
+        result = use_case.execute(command)
+        
+        # Convert orchestrator result to API result
+        # Note: The orchestrator returns ParseCatalogResult with artifact refs
+        return ParseResult(
+            success=True,
+            message=result.message,
+            output_path="out/generator",
+            artifacts={
+                "catalog_ref": {
+                    "key": str(result.catalog_ref.key.value),
+                    "digest": str(result.catalog_ref.digest.value),
+                    "size_bytes": result.catalog_ref.size_bytes,
+                    "uri": result.catalog_ref.uri,
+                    "kind": "file",  # Catalog is always a file
+                },
+                "root_jsons_ref": {
+                    "key": str(result.root_jsons_ref.key.value),
+                    "digest": str(result.root_jsons_ref.digest.value),
+                    "size_bytes": result.root_jsons_ref.size_bytes,
+                    "uri": result.root_jsons_ref.uri,
+                    "kind": "archive",  # Root JSONs are always an archive
+                },
+            }
+        )
 
     def _validate_file_format(self, filename: str) -> None:
         """Validate that the file has a .json extension."""

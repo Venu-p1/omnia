@@ -33,7 +33,7 @@ class TestParseCatalogRoutes:
         self.valid_job_id = str(uuid.uuid4())
         self.valid_correlation_id = str(uuid.uuid4())
         self.valid_headers = {
-            "Authorization": "Bearer valid-token",
+            "Authorization": "Bearer test-token",
             "X-Correlation-ID": self.valid_correlation_id,
         }
 
@@ -51,7 +51,7 @@ class TestParseCatalogRoutes:
         # Should be 401 (auth required) or 422 (validation error)
         assert response.status_code in [401, 422]
 
-    def test_parse_catalog_with_valid_request_structure(self) -> None:
+    def test_parse_catalog_with_valid_request_structure(self, mock_jwt_validation) -> None:
         """Test parse catalog with valid request structure."""
         valid_catalog = {
             "Catalog": {
@@ -97,61 +97,61 @@ class TestParseCatalogRoutes:
         # Should require authentication
         assert response.status_code == 401
 
-    def test_parse_catalog_requires_correlation_id(self) -> None:
+    def test_parse_catalog_requires_correlation_id(self, mock_jwt_validation) -> None:
         """Test that parse catalog endpoint requires correlation ID."""
         response = self.client.post(
             f"/api/v1/jobs/{self.valid_job_id}/stages/parse-catalog",
             files={"catalog": ("catalog.json", b"{}", "application/json")},
-            headers={"Authorization": "Bearer valid-token"},
+            headers={"Authorization": "Bearer test-token"},
         )
         
         # Should require correlation ID
         assert response.status_code == 422
 
-    def test_parse_catalog_invalid_job_id_format(self) -> None:
+    def test_parse_catalog_invalid_job_id_format(self, mock_jwt_validation) -> None:
         """Test parse catalog with invalid job ID format."""
         response = self.client.post(
             "/api/v1/jobs/invalid-uuid/stages/parse-catalog",
             files={"catalog": ("catalog.json", b"{}", "application/json")},
-            headers=self.valid_headers,
+            headers={"Authorization": "Bearer test-token", "X-Correlation-ID": self.valid_correlation_id},
         )
         
         # Should validate job ID format
         assert response.status_code == 422
 
-    def test_parse_catalog_missing_file_parameter(self) -> None:
+    def test_parse_catalog_missing_file_parameter(self, mock_jwt_validation) -> None:
         """Test parse catalog without file parameter."""
         response = self.client.post(
             f"/api/v1/jobs/{self.valid_job_id}/stages/parse-catalog",
-            headers=self.valid_headers,
+            headers={"Authorization": "Bearer test-token", "X-Correlation-ID": self.valid_correlation_id},
         )
         
         # Should require file parameter
         assert response.status_code == 422
 
-    def test_parse_catalog_invalid_file_format(self) -> None:
+    def test_parse_catalog_invalid_file_format(self, mock_jwt_validation) -> None:
         """Test parse catalog with invalid file format."""
         response = self.client.post(
             f"/api/v1/jobs/{self.valid_job_id}/stages/parse-catalog",
             files={"catalog": ("catalog.txt", b"not json", "text/plain")},
-            headers=self.valid_headers,
+            headers={"Authorization": "Bearer test-token", "X-Correlation-ID": self.valid_correlation_id},
         )
         
         # Should validate file format
         assert response.status_code in [400, 422]
 
-    def test_parse_catalog_invalid_json_content(self) -> None:
+    def test_parse_catalog_invalid_json_content(self, mock_jwt_validation) -> None:
         """Test parse catalog with invalid JSON content."""
         response = self.client.post(
             f"/api/v1/jobs/{self.valid_job_id}/stages/parse-catalog",
-            files={"catalog": ("catalog.json", b"not valid json", "application/json")},
-            headers=self.valid_headers,
+            files={"catalog": ("catalog.json", b"invalid json", "application/json")},
+            headers={"Authorization": "Bearer test-token", "X-Correlation-ID": self.valid_correlation_id},
         )
         
         # Should validate JSON content
         assert response.status_code in [400, 422]
 
-    def test_parse_catalog_oversized_file(self) -> None:
+    def test_parse_catalog_oversized_file(self, mock_jwt_validation) -> None:
         """Test parse catalog with oversized file."""
         # Create a large JSON payload (over 5MB)
         large_content = b'{"test": "' + b'x' * (5 * 1024 * 1024) + b'"}'
@@ -159,7 +159,7 @@ class TestParseCatalogRoutes:
         response = self.client.post(
             f"/api/v1/jobs/{self.valid_job_id}/stages/parse-catalog",
             files={"catalog": ("catalog.json", large_content, "application/json")},
-            headers=self.valid_headers,
+            headers={"Authorization": "Bearer test-token", "X-Correlation-ID": self.valid_correlation_id},
         )
         
         # Should reject oversized files
@@ -198,7 +198,7 @@ class TestParseCatalogRoutes:
         assert "parse-catalog" in docs_content.lower()
 
     @patch('api.parse_catalog.service.ParseCatalogService')
-    def test_parse_catalog_service_integration(self, mock_service) -> None:
+    def test_parse_catalog_service_integration(self, mock_service, mock_jwt_validation) -> None:
         """Test integration with ParseCatalogService."""
         # Mock service to return a realistic response
         mock_instance = MagicMock()
