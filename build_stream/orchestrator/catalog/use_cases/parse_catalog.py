@@ -34,6 +34,7 @@ from core.catalog.exceptions import (
     InvalidFileFormatError,
     InvalidJSONError,
 )
+from jsonschema import ValidationError
 from core.catalog.generator import generate_root_json_from_catalog
 from core.jobs.entities import AuditEvent, Job, Stage
 from core.jobs.exceptions import (
@@ -281,6 +282,12 @@ class ParseCatalogUseCase:
                     catalog_path=str(catalog_file),
                     output_root=str(output_dir),
                 )
+            except ValidationError as e:
+                # Preserve the original validation error message
+                error_msg = f"Catalog schema validation failed: {e.message}"
+                if e.absolute_path:
+                    error_msg += f" at {'/'.join(str(p) for p in e.absolute_path)}"
+                raise CatalogSchemaValidationError(error_msg) from e
             except Exception as e:
                 raise CatalogSchemaValidationError(
                     f"Catalog processing failed: {e}"

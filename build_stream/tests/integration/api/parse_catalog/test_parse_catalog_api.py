@@ -190,7 +190,7 @@ class TestParseCatalogAPI:
         assert response.status_code == 500
         data = response.json()
         assert data["detail"]["error_code"] == "CATALOG_PARSE_ERROR"
-        assert "validation" in data["detail"]["message"].lower() or "error" in data["detail"]["message"].lower()
+        assert "validation" in data["detail"]["message"].lower()
 
     def test_parse_catalog_file_too_large(
         self,

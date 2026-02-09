@@ -19,8 +19,10 @@ import logging
 import os
 import tempfile
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Optional
 
+from common.config import load_config
 from core.catalog.generator import generate_root_json_from_catalog
 
 logger = logging.getLogger(__name__)
@@ -51,15 +53,25 @@ class ParseResult:
 class ParseCatalogService:  # pylint: disable=too-few-public-methods
     """Service for parsing catalog files."""
 
-    DEFAULT_OUTPUT_ROOT = "out/generator"
-
     def __init__(self, output_root: Optional[str] = None):
         """Initialize the ParseCatalog service.
 
         Args:
             output_root: Root directory for generated output files.
+                        If None, uses working_dir from config.
         """
-        self.output_root = output_root or self.DEFAULT_OUTPUT_ROOT
+        if output_root is None:
+            try:
+                config = load_config()
+                working_dir = Path(config.artifact_store.working_dir)
+                working_dir.mkdir(parents=True, exist_ok=True)
+                self.output_root = str(working_dir / "tmp" / "generator")
+            except (FileNotFoundError, ValueError):
+                self.output_root = "/tmp/build_stream/tmp/generator"
+        else:
+            self.output_root = output_root
+        
+        Path(self.output_root).mkdir(parents=True, exist_ok=True)
 
     async def parse_catalog(
         self,

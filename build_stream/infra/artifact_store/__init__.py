@@ -14,10 +14,12 @@
 
 """Artifact store infrastructure implementations."""
 
-from .in_memory_artifact_store import InMemoryArtifactStore
 from .in_memory_artifact_metadata import InMemoryArtifactMetadataRepository
+from .in_memory_artifact_store import InMemoryArtifactStore
+from .file_artifact_store import FileArtifactStore
 
 __all__ = [
     "InMemoryArtifactStore",
     "InMemoryArtifactMetadataRepository",
+    "FileArtifactStore",
 ]

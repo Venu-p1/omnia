@@ -21,6 +21,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 
 from api.dependencies import require_catalog_read
 from container import container
+from core.catalog.exceptions import CatalogParseError as CoreCatalogParseError
 from core.jobs.exceptions import (
     InvalidStateTransitionError,
     JobNotFoundError,
@@ -78,7 +79,7 @@ _service = ParseCatalogService()
 async def parse_catalog(
     job_id: str,
     file: UploadFile = File(..., description="The catalog JSON file to parse"),
-    #token_data: Annotated[dict, Depends(require_catalog_read)] = None,  # pylint: disable=unused-argument
+    token_data: Annotated[dict, Depends(require_catalog_read)] = None,  # pylint: disable=unused-argument
 ) -> ParseCatalogResponse:
     """Parse a catalog from an uploaded JSON file.
 
@@ -214,7 +215,7 @@ async def parse_catalog(
             },
         ) from e
 
-    except CatalogParseError as e:
+    except (CatalogParseError, CoreCatalogParseError) as e:
         logger.error("Catalog parsing failed for file: %s", file.filename)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
