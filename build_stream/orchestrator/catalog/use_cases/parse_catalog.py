@@ -48,7 +48,7 @@ from core.jobs.repositories import (
     StageRepository,
     UUIDGenerator,
 )
-from core.jobs.value_objects import JobState, StageName, StageState
+from core.jobs.value_objects import JobId, StageName, StageType, StageState, JobState
 
 from ..commands.parse_catalog import ParseCatalogCommand
 from ..dtos import ParseCatalogResult
@@ -116,12 +116,12 @@ class ParseCatalogUseCase:
             self._validate_file_format(command.filename)
             catalog_data = self._parse_and_validate_json(command.content)
             catalog_ref = self._store_catalog_artifact(command)
-            root_jsons_ref, file_map = self._generate_and_store_root_jsons(
+            root_jsons_ref = self._generate_and_store_root_jsons(
                 command, catalog_data
             )
             self._mark_stage_completed(stage, command)
             return self._build_success_result(
-                command, catalog_ref, root_jsons_ref, file_map
+                command, catalog_ref, root_jsons_ref
             )
         except Exception as e:
             self._mark_stage_failed(stage, command, e)
@@ -151,7 +151,7 @@ class ParseCatalogUseCase:
             )
 
         stage = self._stage_repo.find_by_job_and_name(
-            command.job_id, StageName("parse-catalog")
+            command.job_id, StageName(StageType.PARSE_CATALOG.value)
         )
         if stage is None:
             raise JobNotFoundError(
@@ -247,7 +247,7 @@ class ParseCatalogUseCase:
         record = ArtifactRecord(
             id=str(self._uuid_generator.generate()),
             job_id=command.job_id,
-            stage_name=StageName("parse-catalog"),
+            stage_name=StageName(StageType.PARSE_CATALOG.value),
             label="catalog-file",
             artifact_ref=catalog_ref,
             kind=ArtifactKind.FILE,
@@ -286,18 +286,6 @@ class ParseCatalogUseCase:
                     f"Catalog processing failed: {e}"
                 ) from e
 
-            # Collect generated files into file_map
-            file_map: Dict[str, bytes] = {}
-            for root, _dirs, files in os.walk(str(output_dir)):
-                for fname in files:
-                    if fname.endswith(".json"):
-                        abs_path = os.path.join(root, fname)
-                        rel_path = os.path.relpath(abs_path, str(output_dir))
-                        # Normalize to forward slashes for cross-platform consistency
-                        rel_path = rel_path.replace("\\", "/")
-                        with open(abs_path, "rb") as f:
-                            file_map[rel_path] = f.read()
-
             hint = StoreHint(
                 namespace="catalog",
                 label="root-jsons",
@@ -308,7 +296,7 @@ class ParseCatalogUseCase:
                 root_jsons_ref = self._artifact_store.store(
                     hint=hint,
                     kind=ArtifactKind.ARCHIVE,
-                    file_map=file_map,
+                    source_directory=output_dir,
                     content_type="application/zip",
                 )
             except ArtifactAlreadyExistsError:
@@ -325,19 +313,18 @@ class ParseCatalogUseCase:
             record = ArtifactRecord(
                 id=str(self._uuid_generator.generate()),
                 job_id=command.job_id,
-                stage_name=StageName("parse-catalog"),
+                stage_name=StageName(StageType.PARSE_CATALOG.value),
                 label="root-jsons",
                 artifact_ref=root_jsons_ref,
                 kind=ArtifactKind.ARCHIVE,
                 content_type="application/zip",
                 tags={
                     "job_id": str(command.job_id),
-                    "file_count": str(len(file_map)),
                 },
             )
             self._artifact_metadata_repo.save(record)
 
-            return root_jsons_ref, file_map
+            return root_jsons_ref
 
     # ------------------------------------------------------------------
     # State transitions
@@ -423,22 +410,15 @@ class ParseCatalogUseCase:
         command: ParseCatalogCommand,
         catalog_ref: ArtifactRef,
         root_jsons_ref: ArtifactRef,
-        file_map: Dict[str, bytes],
     ) -> ParseCatalogResult:
         """Build the success result DTO."""
-        combos: set[Tuple[str, str, str]] = set()
-        for rel_path in file_map:
-            parts = Path(rel_path).parts
-            if len(parts) >= 3:
-                combos.add((parts[0], parts[1], parts[2]))
-
         return ParseCatalogResult(
             job_id=str(command.job_id),
             stage_state="COMPLETED",
             message="Catalog parsed successfully",
             catalog_ref=catalog_ref,
             root_jsons_ref=root_jsons_ref,
-            root_json_count=len(file_map),
-            arch_os_combinations=sorted(combos),
+            root_json_count=0,  # No longer tracking file count
+            arch_os_combinations=[],  # No longer tracking combinations
             completed_at=datetime.now(timezone.utc).isoformat(),
         )

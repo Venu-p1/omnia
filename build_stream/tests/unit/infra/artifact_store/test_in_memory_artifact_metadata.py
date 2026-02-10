@@ -23,7 +23,7 @@ from core.artifacts.value_objects import (
     ArtifactKind,
     ArtifactRef,
 )
-from core.jobs.value_objects import JobId, StageName
+from core.jobs.value_objects import JobId, StageName, StageType
 from infra.artifact_store.in_memory_artifact_metadata import (
     InMemoryArtifactMetadataRepository,
 )
@@ -67,7 +67,7 @@ class TestSave:
         artifact_metadata_repo.save(record)
         found = artifact_metadata_repo.find_by_job_stage_and_label(
             job_id=JobId(VALID_JOB_ID),
-            stage_name=StageName("parse-catalog"),
+            stage_name=StageName(StageType.PARSE_CATALOG.value),
             label="catalog-file",
         )
         assert found is not None
@@ -80,7 +80,7 @@ class TestSave:
         artifact_metadata_repo.save(record2)
         found = artifact_metadata_repo.find_by_job_stage_and_label(
             job_id=JobId(VALID_JOB_ID),
-            stage_name=StageName("parse-catalog"),
+            stage_name=StageName(StageType.PARSE_CATALOG.value),
             label="catalog-file",
         )
         assert found is not None
@@ -93,7 +93,7 @@ class TestFind:
     def test_find_not_found(self, artifact_metadata_repo) -> None:
         found = artifact_metadata_repo.find_by_job_stage_and_label(
             job_id=JobId(VALID_JOB_ID),
-            stage_name=StageName("parse-catalog"),
+            stage_name=StageName(StageType.PARSE_CATALOG.value),
             label="nonexistent",
         )
         assert found is None

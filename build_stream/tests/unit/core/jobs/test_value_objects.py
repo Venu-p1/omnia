@@ -141,7 +141,7 @@ class TestStageName:
     def test_case_sensitive(self):
         """Stage names are case-sensitive."""
         with pytest.raises(ValueError, match="Invalid stage name"):
-            StageName("Parse-Catalog")
+            StageName("Parse-Catalog")  # This test intentionally uses invalid case
 
     def test_exceeds_maximum_length(self):
         """String longer than max length should be rejected."""
@@ -150,7 +150,7 @@ class TestStageName:
 
     def test_immutability(self):
         """StageName should be immutable."""
-        stage = StageName("parse-catalog")
+        stage = StageName(StageType.PARSE_CATALOG.value)
         with pytest.raises(AttributeError):
             stage.value = "build-image"
 
