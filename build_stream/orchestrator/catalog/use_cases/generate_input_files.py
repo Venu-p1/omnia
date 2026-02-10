@@ -51,7 +51,7 @@ from core.jobs.repositories import (
     StageRepository,
     UUIDGenerator,
 )
-from core.jobs.value_objects import StageName, StageState
+from core.jobs.value_objects import JobId, StageName, StageType, StageState, JobState
 
 from ..commands.generate_input_files import GenerateInputFilesCommand
 from ..dtos import GenerateInputFilesResult
@@ -110,15 +110,15 @@ class GenerateInputFilesUseCase:
                     command, Path(tmp_dir)
                 )
                 policy_path = self._resolve_policy_path(command)
-                config_file_map = self._generate_omnia_configs(
+                config_output_dir = self._generate_omnia_configs(
                     root_jsons_dir, policy_path, Path(tmp_dir)
                 )
                 configs_ref, configs_record = self._store_output_artifacts(
-                    command, config_file_map
+                    command, config_output_dir
                 )
                 self._mark_stage_completed(stage, command)
                 return self._build_success_result(
-                    command, configs_ref, configs_record, config_file_map
+                    command, configs_ref, configs_record, config_output_dir
                 )
         except Exception as e:
             self._mark_stage_failed(stage, command, e)
@@ -148,7 +148,7 @@ class GenerateInputFilesUseCase:
             )
 
         stage = self._stage_repo.find_by_job_and_name(
-            command.job_id, StageName("generate-input-files")
+            command.job_id, StageName(StageType.GENERATE_INPUT_FILES.value)
         )
         if stage is None:
             raise JobNotFoundError(
@@ -179,7 +179,7 @@ class GenerateInputFilesUseCase:
     ) -> None:
         """Verify that parse-catalog stage is COMPLETED."""
         parse_stage = self._stage_repo.find_by_job_and_name(
-            command.job_id, StageName("parse-catalog")
+            command.job_id, StageName(StageType.PARSE_CATALOG.value)
         )
         if (
             parse_stage is None
@@ -206,7 +206,7 @@ class GenerateInputFilesUseCase:
         """Retrieve root JSONs archive from ArtifactStore and unpack."""
         record = self._artifact_metadata_repo.find_by_job_stage_and_label(
             job_id=command.job_id,
-            stage_name=StageName("parse-catalog"),
+            stage_name=StageName(StageType.PARSE_CATALOG.value),
             label="root-jsons",
         )
         if record is None:
@@ -244,7 +244,7 @@ class GenerateInputFilesUseCase:
         root_jsons_dir: Path,
         policy_path: str,
         tmp_base: Path,
-    ) -> Dict[str, bytes]:
+    ) -> Path:
         """Generate Omnia config files using the adapter policy engine."""
         output_dir = tmp_base / "omnia-configs"
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -265,23 +265,19 @@ class GenerateInputFilesUseCase:
                 f"Config generation failed: {e}"
             ) from e
 
-        file_map: Dict[str, bytes] = {}
-        for root, _dirs, files in os.walk(str(output_dir)):
-            for filename in files:
-                if filename.endswith(".json"):
-                    abs_path = os.path.join(root, filename)
-                    rel_path = os.path.relpath(abs_path, str(output_dir))
-                    # Normalize to forward slashes for cross-platform consistency
-                    rel_path = rel_path.replace("\\", "/")
-                    with open(abs_path, "rb") as f:
-                        file_map[rel_path] = f.read()
+        # Check if any files were generated
+        has_files = any(
+            filename.endswith(".json")
+            for root, _dirs, files in os.walk(str(output_dir))
+            for filename in files
+        )
 
-        if not file_map:
+        if not has_files:
             raise ConfigGenerationError(
                 "No config files generated. Check adapter policy and root JSONs."
             )
 
-        return file_map
+        return output_dir
 
     # ------------------------------------------------------------------
     # Artifact storage
@@ -290,7 +286,7 @@ class GenerateInputFilesUseCase:
     def _store_output_artifacts(
         self,
         command: GenerateInputFilesCommand,
-        config_file_map: Dict[str, bytes],
+        config_output_dir: Path,
     ) -> Tuple[ArtifactRef, ArtifactRecord]:
         """Store generated configs as archive artifact and persist metadata."""
         hint = StoreHint(
@@ -302,21 +298,20 @@ class GenerateInputFilesUseCase:
         configs_ref = self._artifact_store.store(
             hint=hint,
             kind=ArtifactKind.ARCHIVE,
-            file_map=config_file_map,
+            source_directory=config_output_dir,
             content_type="application/zip",
         )
 
         record = ArtifactRecord(
             id=str(self._uuid_generator.generate()),
             job_id=command.job_id,
-            stage_name=StageName("generate-input-files"),
+            stage_name=StageName(StageType.GENERATE_INPUT_FILES.value),
             label="omnia-configs",
             artifact_ref=configs_ref,
             kind=ArtifactKind.ARCHIVE,
             content_type="application/zip",
             tags={
                 "job_id": str(command.job_id),
-                "file_count": str(len(config_file_map)),
             },
         )
         self._artifact_metadata_repo.save(record)
@@ -403,22 +398,16 @@ class GenerateInputFilesUseCase:
         command: GenerateInputFilesCommand,
         configs_ref: ArtifactRef,
         configs_record: ArtifactRecord,
-        config_file_map: Dict[str, bytes],
+        config_output_dir: Path,
     ) -> GenerateInputFilesResult:
         """Build the success result DTO."""
-        combos: set[Tuple[str, str, str]] = set()
-        for rel_path in config_file_map:
-            parts = Path(rel_path).parts
-            if len(parts) >= 3:
-                combos.add((parts[0], parts[1], parts[2]))
-
         return GenerateInputFilesResult(
             job_id=str(command.job_id),
             stage_state="COMPLETED",
             message="Input files generated successfully",
             configs_ref=configs_ref,
-            config_file_count=len(config_file_map),
-            config_files=sorted(config_file_map.keys()),
-            arch_os_combinations=sorted(combos),
+            config_file_count=0,  # No longer tracking file count
+            config_files=[],  # No longer tracking file list
+            arch_os_combinations=[],  # No longer tracking combinations
             completed_at=datetime.now(timezone.utc).isoformat(),
         )

@@ -43,6 +43,7 @@ from core.jobs.value_objects import (
     JobId,
     StageName,
     StageState,
+    StageType,
 )
 from orchestrator.catalog.commands.generate_input_files import (
     GenerateInputFilesCommand,
@@ -129,7 +130,7 @@ def _seed_upstream_artifacts(
     record = ArtifactRecord(
         id=str(uuid_generator.generate()),
         job_id=JobId(job_id_str),
-        stage_name=StageName("parse-catalog"),
+        stage_name=StageName(StageType.PARSE_CATALOG.value),
         label="root-jsons",
         artifact_ref=ref,
         kind=ArtifactKind.ARCHIVE,
@@ -226,7 +227,7 @@ class TestUpstreamValidation:
             uc.execute(_make_command())
 
         stage = stage_repo.find_by_job_and_name(
-            JobId(VALID_JOB_ID), StageName("generate-input-files")
+            JobId(VALID_JOB_ID), StageName(StageType.GENERATE_INPUT_FILES.value)
         )
         assert stage.stage_state == StageState.FAILED
 
@@ -277,19 +278,19 @@ class TestHappyPath:
             result = uc.execute(_make_command())
 
         assert result.stage_state == "COMPLETED"
-        assert result.config_file_count == 1
-        assert "x86_64/rhel/9.5/omnia_config.json" in result.config_files
+        assert result.config_file_count == 0  # No longer tracking file count
+        assert result.config_files == []  # No longer tracking file list
 
         # Stage should be COMPLETED
         stage = stage_repo.find_by_job_and_name(
-            JobId(VALID_JOB_ID), StageName("generate-input-files")
+            JobId(VALID_JOB_ID), StageName(StageType.GENERATE_INPUT_FILES.value)
         )
         assert stage.stage_state == StageState.COMPLETED
 
         # Artifact metadata should be saved
         record = artifact_metadata_repo.find_by_job_stage_and_label(
             job_id=JobId(VALID_JOB_ID),
-            stage_name=StageName("generate-input-files"),
+            stage_name=StageName(StageType.GENERATE_INPUT_FILES.value),
             label="omnia-configs",
         )
         assert record is not None
@@ -334,7 +335,7 @@ class TestHappyPath:
                 uc.execute(_make_command())
 
         stage = stage_repo.find_by_job_and_name(
-            JobId(VALID_JOB_ID), StageName("generate-input-files")
+            JobId(VALID_JOB_ID), StageName(StageType.GENERATE_INPUT_FILES.value)
         )
         assert stage.stage_state == StageState.FAILED
 

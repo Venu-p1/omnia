@@ -27,6 +27,7 @@ from core.jobs.value_objects import (
     JobState,
     StageName,
     StageState,
+    StageType,
 )
 from infra.artifact_store.in_memory_artifact_store import InMemoryArtifactStore
 from infra.artifact_store.in_memory_artifact_metadata import (
@@ -121,7 +122,7 @@ def parse_catalog_stage(job_id) -> Stage:
     """A parse-catalog stage in PENDING state."""
     return Stage(
         job_id=job_id,
-        stage_name=StageName("parse-catalog"),
+        stage_name=StageName(StageType.PARSE_CATALOG.value),
         stage_state=StageState.PENDING,
     )
 
@@ -131,7 +132,7 @@ def completed_parse_catalog_stage(job_id) -> Stage:
     """A parse-catalog stage in COMPLETED state."""
     stage = Stage(
         job_id=job_id,
-        stage_name=StageName("parse-catalog"),
+        stage_name=StageName(StageType.PARSE_CATALOG.value),
         stage_state=StageState.PENDING,
     )
     stage.start()
@@ -144,6 +145,6 @@ def generate_input_files_stage(job_id) -> Stage:
     """A generate-input-files stage in PENDING state."""
     return Stage(
         job_id=job_id,
-        stage_name=StageName("generate-input-files"),
+        stage_name=StageName(StageType.GENERATE_INPUT_FILES.value),
         stage_state=StageState.PENDING,
     )
