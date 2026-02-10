@@ -21,7 +21,7 @@ from build_stream.core.jobs.exceptions import (
     InvalidStateTransitionError,
     TerminalStateViolationError,
 )
-from build_stream.core.jobs.value_objects import JobId, StageName, StageState
+from build_stream.core.jobs.value_objects import JobId, StageName, StageState, StageType
 
 
 class TestStage:
@@ -31,7 +31,7 @@ class TestStage:
         """Stage should be created with initial state."""
         stage = Stage(
             job_id=JobId("018f3c4c-6a2e-7b2a-9c2a-3d8d2c4b9a11"),
-            stage_name=StageName("parse-catalog"),
+            stage_name=StageName(StageType.PARSE_CATALOG.value),
         )
         assert stage.stage_state == StageState.PENDING
         assert stage.attempt == 1
@@ -43,7 +43,7 @@ class TestStage:
         """Stage should transition from PENDING to IN_PROGRESS."""
         stage = Stage(
             job_id=JobId("018f3c4c-6a2e-7b2a-9c2a-3d8d2c4b9a11"),
-            stage_name=StageName("parse-catalog"),
+            stage_name=StageName(StageType.PARSE_CATALOG.value),
         )
         stage.start()
         assert stage.stage_state == StageState.IN_PROGRESS
@@ -54,7 +54,7 @@ class TestStage:
         """Starting stage from non-PENDING state should fail."""
         stage = Stage(
             job_id=JobId("018f3c4c-6a2e-7b2a-9c2a-3d8d2c4b9a11"),
-            stage_name=StageName("parse-catalog"),
+            stage_name=StageName(StageType.PARSE_CATALOG.value),
             stage_state=StageState.IN_PROGRESS,
         )
         with pytest.raises(InvalidStateTransitionError):
@@ -64,7 +64,7 @@ class TestStage:
         """Stage should transition from IN_PROGRESS to COMPLETED."""
         stage = Stage(
             job_id=JobId("018f3c4c-6a2e-7b2a-9c2a-3d8d2c4b9a11"),
-            stage_name=StageName("parse-catalog"),
+            stage_name=StageName(StageType.PARSE_CATALOG.value),
             stage_state=StageState.IN_PROGRESS,
         )
         stage.complete()
@@ -76,7 +76,7 @@ class TestStage:
         """Stage should transition from IN_PROGRESS to FAILED with error details."""
         stage = Stage(
             job_id=JobId("018f3c4c-6a2e-7b2a-9c2a-3d8d2c4b9a11"),
-            stage_name=StageName("parse-catalog"),
+            stage_name=StageName(StageType.PARSE_CATALOG.value),
             stage_state=StageState.IN_PROGRESS,
         )
         stage.fail(error_code="ERR_PARSE", error_summary="Parse failed")
@@ -90,7 +90,7 @@ class TestStage:
         """Stage should transition from PENDING to SKIPPED."""
         stage = Stage(
             job_id=JobId("018f3c4c-6a2e-7b2a-9c2a-3d8d2c4b9a11"),
-            stage_name=StageName("parse-catalog"),
+            stage_name=StageName(StageType.PARSE_CATALOG.value),
         )
         stage.skip()
         assert stage.stage_state == StageState.SKIPPED
@@ -101,7 +101,7 @@ class TestStage:
         """Stage should be cancellable from PENDING state."""
         stage = Stage(
             job_id=JobId("018f3c4c-6a2e-7b2a-9c2a-3d8d2c4b9a11"),
-            stage_name=StageName("parse-catalog"),
+            stage_name=StageName(StageType.PARSE_CATALOG.value),
         )
         stage.cancel()
         assert stage.stage_state == StageState.CANCELLED
@@ -111,7 +111,7 @@ class TestStage:
         """Stage should be cancellable from IN_PROGRESS state."""
         stage = Stage(
             job_id=JobId("018f3c4c-6a2e-7b2a-9c2a-3d8d2c4b9a11"),
-            stage_name=StageName("parse-catalog"),
+            stage_name=StageName(StageType.PARSE_CATALOG.value),
             stage_state=StageState.IN_PROGRESS,
         )
         stage.cancel()
@@ -121,7 +121,7 @@ class TestStage:
         """Terminal states should prevent any transitions."""
         stage = Stage(
             job_id=JobId("018f3c4c-6a2e-7b2a-9c2a-3d8d2c4b9a11"),
-            stage_name=StageName("parse-catalog"),
+            stage_name=StageName(StageType.PARSE_CATALOG.value),
             stage_state=StageState.COMPLETED,
         )
         with pytest.raises(TerminalStateViolationError):

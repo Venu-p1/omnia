@@ -33,6 +33,7 @@ from core.jobs.value_objects import (
     CorrelationId,
     JobId,
     StageName,
+    StageType,
     StageState,
 )
 from orchestrator.catalog.commands.parse_catalog import ParseCatalogCommand
@@ -169,7 +170,7 @@ class TestValidation:
 
         # Stage should be FAILED
         stage = stage_repo.find_by_job_and_name(
-            JobId(VALID_JOB_ID), StageName("parse-catalog")
+            JobId(VALID_JOB_ID), StageName(StageType.PARSE_CATALOG.value)
         )
         assert stage.stage_state == StageState.FAILED
 
@@ -237,7 +238,7 @@ class TestHappyPath:
             # before the root JSON generation step
             record = artifact_metadata_repo.find_by_job_stage_and_label(
                 job_id=JobId(VALID_JOB_ID),
-                stage_name=StageName("parse-catalog"),
+                stage_name=StageName(StageType.PARSE_CATALOG.value),
                 label="catalog-file",
             )
             # It's OK if record is None when validation fails early
@@ -264,7 +265,7 @@ class TestHappyPath:
             pass
 
         stage = stage_repo.find_by_job_and_name(
-            JobId(VALID_JOB_ID), StageName("parse-catalog")
+            JobId(VALID_JOB_ID), StageName(StageType.PARSE_CATALOG.value)
         )
         assert stage.stage_state == StageState.FAILED
         assert stage.error_code is not None
