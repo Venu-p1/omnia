@@ -90,7 +90,7 @@ ARTIFACTS_DIR = BUILD_STREAM_ROOT / "artifacts"
 
 POLL_INTERVAL_SECONDS = int(os.getenv("POLL_INTERVAL_SECONDS", "2"))
 MAX_CONCURRENT_JOBS = int(os.getenv("MAX_CONCURRENT_JOBS", "1"))
-DEFAULT_TIMEOUT_MINUTES = int(os.getenv("DEFAULT_TIMEOUT_MINUTES", "30"))
+DEFAULT_TIMEOUT_MINUTES = int(os.getenv("BSM_WATCHER_TIMEOUT_MINUTES", "360"))
 
 # Playbook name to full path mapping - prevents injection from user input
 PLAYBOOK_NAME_TO_PATH = {
@@ -1002,7 +1002,7 @@ def execute_molecule(request_data: Dict[str, Any]) -> Dict[str, Any]:
     attempt = request_data.get("attempt", 1)
     
     config_path = request_data["config_path"]
-    timeout_minutes = 360  # Hardcoded default, not from request_data
+    timeout_minutes = int(os.getenv("BSM_WATCHER_TIMEOUT_MINUTES", "360"))
     correlation_id = request_data.get("correlation_id", job_id)
     
     log_secure_info("info", "Executing molecule for job", job_id)

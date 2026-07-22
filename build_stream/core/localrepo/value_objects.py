@@ -17,6 +17,7 @@
 All value objects are immutable and defined by their values, not identity.
 """
 
+import os
 import re
 from dataclasses import dataclass
 from typing import ClassVar, Dict, Any
@@ -129,8 +130,8 @@ class ExecutionTimeout:
     minutes: int
 
     MIN_MINUTES: ClassVar[int] = 1
-    MAX_MINUTES: ClassVar[int] = 360
-    DEFAULT_MINUTES: ClassVar[int] = 30
+    MAX_MINUTES: ClassVar[int] = int(os.getenv("BSM_WATCHER_TIMEOUT_MINUTES", "720"))
+    DEFAULT_MINUTES: ClassVar[int] = int(os.getenv("BSM_WATCHER_TIMEOUT_MINUTES", "360"))
 
     def __post_init__(self) -> None:
         """Validate timeout range."""
