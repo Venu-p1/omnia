@@ -129,7 +129,7 @@ class ExecutionTimeout:
     minutes: int
 
     MIN_MINUTES: ClassVar[int] = 1
-    MAX_MINUTES: ClassVar[int] = 120
+    MAX_MINUTES: ClassVar[int] = 360
     DEFAULT_MINUTES: ClassVar[int] = 30
 
     def __post_init__(self) -> None:

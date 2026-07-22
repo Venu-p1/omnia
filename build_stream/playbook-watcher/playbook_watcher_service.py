@@ -1002,7 +1002,7 @@ def execute_molecule(request_data: Dict[str, Any]) -> Dict[str, Any]:
     attempt = request_data.get("attempt", 1)
     
     config_path = request_data["config_path"]
-    timeout_minutes = 150  # Hardcoded default, not from request_data
+    timeout_minutes = 360  # Hardcoded default, not from request_data
     correlation_id = request_data.get("correlation_id", job_id)
     
     log_secure_info("info", "Executing molecule for job", job_id)
