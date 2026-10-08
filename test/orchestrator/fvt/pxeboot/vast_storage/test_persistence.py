@@ -12,27 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""HPC benchmarks end-to-end provisioning composite (non-disruptive).
-
-The adjacent-flow invariance checks (TC-14 through TC-17) execute
-``pull_benchmarks.sh`` and therefore live in ``test_destructive.py``
-behind the ``--run-destructive`` gate.
-"""
+"""VAST Slurm log persistence validation test."""
 
 import pytest
-from library.functions import (
-    check_hpc_benchmarks_e2e_provisioning,
-)
 
 from fvt.result import verify_pxeboot
-
-pytestmark = [pytest.mark.slurm, pytest.mark.non_disruptive]
+from library.functions import check_vast_slurm_logs_persistence
 
 
 @pytest.mark.sanity
-@pytest.mark.order(345)
-def test_hpc_benchmarks_e2e_provisioning(host):
-    """TC-09: Verify the end-to-end benchmark provisioning pipeline."""
+@pytest.mark.order(713)
+@pytest.mark.vast_persistence
+def test_vast_slurm_logs_persistence(host):
+    """Verify Slurm logs on persistent storage; sacct accessible."""
     verify_pxeboot(
-        host, "hpc_benchmarks_e2e_provisioning", check_hpc_benchmarks_e2e_provisioning
+        host, "vast_slurm_logs_persistence",
+        check_vast_slurm_logs_persistence,
     )

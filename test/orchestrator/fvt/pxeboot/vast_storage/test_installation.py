@@ -12,27 +12,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""HPC benchmarks end-to-end provisioning composite (non-disruptive).
-
-The adjacent-flow invariance checks (TC-14 through TC-17) execute
-``pull_benchmarks.sh`` and therefore live in ``test_destructive.py``
-behind the ``--run-destructive`` gate.
-"""
+"""VAST NFS client installation verification tests."""
 
 import pytest
-from library.functions import (
-    check_hpc_benchmarks_e2e_provisioning,
-)
 
 from fvt.result import verify_pxeboot
-
-pytestmark = [pytest.mark.slurm, pytest.mark.non_disruptive]
+from library.functions import (
+    check_vast_vastnfs_installation,
+    check_vast_vastnfs_rpm_and_module,
+)
 
 
 @pytest.mark.sanity
-@pytest.mark.order(345)
-def test_hpc_benchmarks_e2e_provisioning(host):
-    """TC-09: Verify the end-to-end benchmark provisioning pipeline."""
-    verify_pxeboot(
-        host, "hpc_benchmarks_e2e_provisioning", check_hpc_benchmarks_e2e_provisioning
-    )
+@pytest.mark.order(700)
+@pytest.mark.vast_installation
+def test_vast_vastnfs_installation(host):
+    """Verify vastnfs-ctl status on compute nodes."""
+    verify_pxeboot(host, "vast_vastnfs_installation", check_vast_vastnfs_installation)
+
+
+@pytest.mark.sanity
+@pytest.mark.order(709)
+@pytest.mark.vast_installation
+def test_vast_vastnfs_rpm_and_module(host):
+    """Verify vastnfs RPM, kernel module, and service."""
+    verify_pxeboot(host, "vast_vastnfs_rpm_and_module", check_vast_vastnfs_rpm_and_module)
