@@ -42,7 +42,7 @@ Generate a catalog for:
 
 | Capability | Description |
 |------------|-------------|
-| Selection Interview | Guides operator through 9-step dependency-ordered configuration selection |
+| Selection Interview | Guides operator through 7-step dependency-ordered configuration selection |
 | Catalog Naming | Offers configuration-specific names or accepts the operator's own name |
 | Hardware Prompts | GPU: NVIDIA or None (CPU-only software); InfiniBand: Yes or No |
 | Stack-Storage Filtering | Validates storage compatibility with selected software stack |
@@ -55,7 +55,7 @@ Generate a catalog for:
 
 ## Workflow
 
-1. **Selection Interview** (Steps 1-9): Collect OS, architecture, stack, roles, GPU, storage, network, source overrides, and additional packages
+1. **Selection Interview** (Steps 1-7): Collect OS, architecture, stack, roles, GPU, storage, network, source overrides, and additional packages
 2. **Name and Confirmation**: Offer catalog names or accept a custom name, then confirm the configuration, name, and output filename
 3. **Functional Layer Expansion**: Generate layers per role and architecture
 4. **Group Resolution**: Resolve group package composition from shipped catalogs
@@ -75,7 +75,7 @@ Generate a catalog for:
 ## Limitations
 
 This skill does **not**:
-- Edit existing catalogs (see `edit-catalog` skill)
+- Edit existing catalogs (see `catalog-editing` skill)
 - Perform bulk catalog edits (see `bulk-edit-catalog` skill)
 - Analyze catalog impact or compatibility (see analysis skills)
 - Update master reference data (manual process)
