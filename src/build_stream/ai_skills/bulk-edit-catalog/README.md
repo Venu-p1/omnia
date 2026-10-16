@@ -20,6 +20,8 @@ Use this skill when you need to:
 
 ## Usage
 
+> **Note:** The example invocations below are natural-language prompts intended for an AI coding agent or assistant, not direct CLI commands.
+
 ### Bulk version pin
 ```
 Pin RHEL from 10.0 to 10.2 for service_k8s_x86_64 and slurm_aarch64
